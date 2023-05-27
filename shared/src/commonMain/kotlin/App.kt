@@ -1,4 +1,3 @@
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,8 +8,10 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
+import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
@@ -18,8 +19,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
 data class TodoItem(val text: String = "", val done: Boolean = false)
@@ -29,7 +37,7 @@ fun App() {
     NavigationHost(
         screens = mapOf(
             Screen.TodoList to { TodoList() },
-            Screen.TodoDetails to { TodoDetails() }
+            Screen.TodoDetails to { param -> TodoDetails(param as TodoItem) }
         )
     )
 }
@@ -54,8 +62,12 @@ private fun TodoList() {
                         })
                         Text(
                             todo.text,
-                            modifier = Modifier.clickable { Navigator.navigateTo(Screen.TodoDetails) }
-                                .align(Alignment.CenterVertically),
+                            modifier = Modifier.clickable {
+                                Navigator.navigate(
+                                    Screen.TodoDetails,
+                                    todos[index]
+                                )
+                            }.align(Alignment.CenterVertically),
                         )
                     }
                 }
@@ -95,18 +107,21 @@ object TodosState {
     fun setCurrentTodoItem(todoItem: TodoItem) {
         _currentTodo.update { todoItem }
     }
+
     fun addTodo(todoItem: TodoItem) {
         _todos.update { todos ->
             todos.add(todoItem)
             todos
         }
     }
+
     fun removeTodo() {
         _todos.update { todos ->
             todos.removeAt(todos.lastIndex)
             todos
         }
     }
+
     fun markTodoAsDone(todoItem: TodoItem) {
         _todos.update { todos ->
             todos[todos.indexOf(todoItem)] = todoItem.copy(done = true)
@@ -116,26 +131,71 @@ object TodosState {
 }
 
 object Navigator {
-    private val _currentScreen = MutableStateFlow<Screen>(Screen.TodoList)
-    val currentScreen: StateFlow<Screen> = _currentScreen
+    private val scope = CoroutineScope(Job() + Dispatchers.Main)
 
-    fun navigateTo(screen: Screen) {
-        _currentScreen.update { screen }
+    private val _backstack =
+        MutableStateFlow<List<NavigationAction>>(listOf(NavigationAction.Navigate(Screen.TodoList)))
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val currentNavigationAction: StateFlow<NavigationAction> =
+        _backstack.mapLatest { it.last() }.stateIn(
+            scope, SharingStarted.Eagerly, NavigationAction.Navigate(Screen.TodoList)
+        )
+
+    fun navigate(screen: Screen, param: Any? = null) {
+        _backstack.update { it + NavigationAction.Navigate(screen, param) }
+    }
+
+    fun goBack() {
+        _backstack.update {
+            if (it.size > 1) {
+                it.dropLast(1)
+            } else {
+                it
+            }
+        }
+    }
+
+    @Composable
+    fun processNavigation(
+        navigationAction: NavigationAction,
+        screens: Map<Screen, @Composable (Any?) -> Unit>
+    ) {
+        when (navigationAction) {
+            is NavigationAction.Navigate -> {
+                screens[navigationAction.screen]?.invoke(navigationAction.param)
+            }
+
+            is NavigationAction.Back -> {
+                goBack()
+            }
+        }
     }
 }
 
 @Composable
-private fun TodoDetails() {
-    val currentTodo = TodosState.todos.collectAsState().value.last()
-    Text(currentTodo.text)
+private fun TodoDetails(param: TodoItem? = null) {
+    Column {
+        TopAppBar(title = { Text("Todo Details") }, navigationIcon = {
+            IconButton(onClick = { Navigator.goBack() }) {
+                Icon(Icons.Filled.ArrowBack, null)
+            }
+        })
+        Text(param?.text ?: "")
+    }
+}
+
+sealed class NavigationAction {
+    object Back : NavigationAction()
+    data class Navigate(val screen: Screen, val param: Any? = null) : NavigationAction()
 }
 
 @Composable
 fun NavigationHost(
-    screens: Map<Screen, @Composable () -> Unit>
+    screens: Map<Screen, @Composable (Any?) -> Unit>
 ) {
-    val currentScreen = Navigator.currentScreen.collectAsState().value
-    screens[currentScreen]?.invoke()
+    val navigationAction = Navigator.currentNavigationAction.collectAsState().value
+    Navigator.processNavigation(navigationAction, screens)
 }
 
 
