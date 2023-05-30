@@ -1,3 +1,4 @@
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
@@ -52,23 +54,28 @@ private fun TodoList() {
     val todos = TodosState.todos.collectAsState().value
     val currentItemText = TodosState.currentTodo.collectAsState().value.text
     Box {
-
         Column {
             Column(Modifier.weight(1f)) {
-                todos.forEachIndexed { index, todo ->
+                todos.forEach { todo ->
                     Row {
                         Checkbox(checked = todo.done, onCheckedChange = {
-                            todos[index] = todo.copy(done = it)
+                            TodosState.toggleTodoCompletion(todo)
                         })
                         Text(
                             todo.text,
                             modifier = Modifier.clickable {
                                 Navigator.navigate(
                                     Screen.TodoDetails,
-                                    todos[index]
+                                    todo
                                 )
                             }.align(Alignment.CenterVertically),
                         )
+                        IconButton(
+                            onClick = { TodosState.removeTodo(todo) },
+                            modifier = Modifier.align(Alignment.CenterVertically)
+                        ) {
+                            Icon(Icons.Filled.Delete, null)
+                        }
                     }
                 }
             }
@@ -98,8 +105,8 @@ private fun TodoList() {
 }
 
 object TodosState {
-    private val _todos = MutableStateFlow(mutableListOf<TodoItem>())
-    val todos: StateFlow<MutableList<TodoItem>> = _todos
+    private val _todos = MutableStateFlow(listOf<TodoItem>())
+    val todos: StateFlow<List<TodoItem>> = _todos
 
     private val _currentTodo = MutableStateFlow(TodoItem())
     val currentTodo: StateFlow<TodoItem> = _currentTodo
@@ -110,22 +117,25 @@ object TodosState {
 
     fun addTodo(todoItem: TodoItem) {
         _todos.update { todos ->
-            todos.add(todoItem)
-            todos
+            todos + todoItem
         }
     }
 
-    fun removeTodo() {
+    fun removeTodo(todoItem: TodoItem) {
         _todos.update { todos ->
-            todos.removeAt(todos.lastIndex)
-            todos
+            todos - todoItem
         }
     }
 
-    fun markTodoAsDone(todoItem: TodoItem) {
+    fun toggleTodoCompletion(todoItem: TodoItem) {
         _todos.update { todos ->
-            todos[todos.indexOf(todoItem)] = todoItem.copy(done = true)
-            todos
+            todos.map {
+                if (it == todoItem) {
+                    TodoItem(it.text, !it.done)
+                } else {
+                    it
+                }
+            }
         }
     }
 }
