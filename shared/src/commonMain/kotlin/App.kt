@@ -1,12 +1,12 @@
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
@@ -52,15 +53,26 @@ sealed class Screen {
 @Composable
 private fun TodoList() {
     val todos = TodosState.todos.collectAsState().value
-    val currentItemText = TodosState.currentTodo.collectAsState().value.text
-    Box {
+    val currentlyEditingTodo = TodosState.currentTodo.collectAsState().value
+    Column {
         Column {
-            Column(Modifier.weight(1f)) {
-                todos.forEach { todo ->
-                    Row {
-                        Checkbox(checked = todo.done, onCheckedChange = {
-                            TodosState.toggleTodoCompletion(todo)
-                        })
+            todos.forEach { todo ->
+                Row {
+                    Checkbox(checked = todo.done, onCheckedChange = {
+                        TodosState.toggleTodoCompletion(todo)
+                    })
+                    if (currentlyEditingTodo == todo) {
+                        TextField(
+                            value = currentlyEditingTodo.text,
+                            onValueChange = { TodosState.updateCurrentTodoItem(it) },
+                            modifier = Modifier.clickable {
+                                Navigator.navigate(
+                                    Screen.TodoDetails,
+                                    todo
+                                )
+                            }.align(Alignment.CenterVertically),
+                        )
+                    } else {
                         Text(
                             todo.text,
                             modifier = Modifier.clickable {
@@ -70,20 +82,37 @@ private fun TodoList() {
                                 )
                             }.align(Alignment.CenterVertically),
                         )
-                        IconButton(
-                            onClick = { TodosState.removeTodo(todo) },
-                            modifier = Modifier.align(Alignment.CenterVertically)
-                        ) {
-                            Icon(Icons.Filled.Delete, null)
-                        }
+                    }
+                    IconButton(
+                        onClick = { TodosState.removeTodo(todo) },
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                    ) {
+                        Icon(Icons.Filled.Delete, null)
+                    }
+                    IconButton(
+                        onClick = { TodosState.setCurrentTodoItem(todo) },
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                    ) {
+                        Icon(Icons.Filled.Edit, null)
                     }
                 }
             }
+
         }
-        Row(modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter)) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            IconButton(
+                modifier = Modifier.align(Alignment.CenterVertically),
+                onClick = {
+                    TodosState.addTodo(TodoItem(currentlyEditingTodo.text, false))
+                    TodosState.setCurrentTodoItem(TodoItem())
+                },
+                enabled = currentlyEditingTodo.text.isNotBlank()
+            ) {
+                Icon(Icons.Filled.Add, null)
+            }
             val labelMinimized = remember { mutableStateOf(false) }
-            TextField(
-                value = currentItemText,
+            OutlinedTextField(
+                value = currentlyEditingTodo.text,
                 onValueChange = { TodosState.setCurrentTodoItem(TodoItem(it)) },
                 modifier = Modifier.weight(1f).onFocusChanged { focusState ->
                     labelMinimized.value = focusState.isFocused
@@ -91,15 +120,6 @@ private fun TodoList() {
                 label = { Text(if (labelMinimized.value) "Todo:" else "What needs to be done?") },
                 singleLine = true,
             )
-            IconButton(
-                onClick = {
-                    TodosState.addTodo(TodoItem(currentItemText, false))
-                    TodosState.setCurrentTodoItem(TodoItem())
-                },
-                enabled = currentItemText.isNotBlank()
-            ) {
-                Icon(Icons.Filled.Add, null)
-            }
         }
     }
 }
@@ -137,6 +157,20 @@ object TodosState {
                 }
             }
         }
+    }
+
+    fun updateCurrentTodoItem(text: String) {
+        val newCurrentTodo = TodoItem(text, _currentTodo.value.done)
+        _todos.update { todos ->
+            todos.map {
+                if (it == _currentTodo.value) {
+                    newCurrentTodo
+                } else {
+                    it
+                }
+            }
+        }
+        _currentTodo.update { newCurrentTodo }
     }
 }
 
