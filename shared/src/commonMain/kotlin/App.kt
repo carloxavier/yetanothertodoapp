@@ -3,12 +3,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -57,12 +58,12 @@ private fun TodoList() {
     Column {
         Column {
             todos.forEach { todo ->
-                Row {
+                Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 16.dp)) {
                     Checkbox(checked = todo.done, onCheckedChange = {
                         TodosState.toggleTodoCompletion(todo)
                     })
                     if (currentlyEditingTodo == todo) {
-                        TextField(
+                        OutlinedTextField(
                             value = currentlyEditingTodo.text,
                             onValueChange = { TodosState.updateCurrentTodoItem(it) },
                             modifier = Modifier.clickable {
@@ -70,7 +71,9 @@ private fun TodoList() {
                                     Screen.TodoDetails,
                                     todo
                                 )
-                            }.align(Alignment.CenterVertically),
+                            }.align(Alignment.CenterVertically)
+                                .padding(start = 16.dp)
+                                .weight(1f),
                         )
                     } else {
                         Text(
@@ -80,7 +83,7 @@ private fun TodoList() {
                                     Screen.TodoDetails,
                                     todo
                                 )
-                            }.align(Alignment.CenterVertically),
+                            }.align(Alignment.CenterVertically).weight(1f).padding(start = 16.dp),
                         )
                     }
                     IconButton(
@@ -99,9 +102,11 @@ private fun TodoList() {
             }
 
         }
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 32.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             IconButton(
-                modifier = Modifier.align(Alignment.CenterVertically),
                 onClick = {
                     TodosState.addTodo(TodoItem(currentlyEditingTodo.text, false))
                     TodosState.setCurrentTodoItem(TodoItem())
@@ -114,7 +119,7 @@ private fun TodoList() {
             OutlinedTextField(
                 value = currentlyEditingTodo.text,
                 onValueChange = { TodosState.setCurrentTodoItem(TodoItem(it)) },
-                modifier = Modifier.weight(1f).onFocusChanged { focusState ->
+                modifier = Modifier.fillMaxWidth().onFocusChanged { focusState ->
                     labelMinimized.value = focusState.isFocused
                 },
                 label = { Text(if (labelMinimized.value) "Todo:" else "What needs to be done?") },
