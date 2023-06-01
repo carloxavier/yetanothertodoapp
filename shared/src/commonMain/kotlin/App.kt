@@ -1,4 +1,3 @@
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,11 +16,12 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,8 +33,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.datetime.Clock
 
-data class TodoItem(val text: String = "", val done: Boolean = false)
+data class TodoItem(
+    val text: String = "",
+    val done: Boolean = false,
+    val timestamp: Long = Clock.System.now().toEpochMilliseconds()
+)
 
 @Composable
 fun App() {
@@ -55,6 +60,7 @@ sealed class Screen {
 private fun TodoList() {
     val todos = TodosState.todos.collectAsState().value
     val currentlyEditingTodo = TodosState.currentTodo.collectAsState().value
+    val focusRequester = remember { FocusRequester() }
     Column {
         Column {
             todos.forEach { todo ->
@@ -73,7 +79,11 @@ private fun TodoList() {
                                 )
                             }.align(Alignment.CenterVertically)
                                 .padding(start = 16.dp)
-                                .weight(1f),
+                                .weight(1f)
+                                .focusRequester(focusRequester).onGloballyPositioned {
+                                    focusRequester.requestFocus()
+                                },
+                            enabled = true,
                         )
                     } else {
                         Text(
@@ -103,28 +113,16 @@ private fun TodoList() {
 
         }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 32.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 32.dp).clickable {
+                TodoItem().also {
+                    TodosState.addTodo(it)
+                    TodosState.setCurrentTodoItem(it)
+                }
+            },
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
-                onClick = {
-                    TodosState.addTodo(TodoItem(currentlyEditingTodo.text, false))
-                    TodosState.setCurrentTodoItem(TodoItem())
-                },
-                enabled = currentlyEditingTodo.text.isNotBlank()
-            ) {
-                Icon(Icons.Filled.Add, null)
-            }
-            val labelMinimized = remember { mutableStateOf(false) }
-            OutlinedTextField(
-                value = currentlyEditingTodo.text,
-                onValueChange = { TodosState.setCurrentTodoItem(TodoItem(it)) },
-                modifier = Modifier.fillMaxWidth().onFocusChanged { focusState ->
-                    labelMinimized.value = focusState.isFocused
-                },
-                label = { Text(if (labelMinimized.value) "Todo:" else "What needs to be done?") },
-                singleLine = true,
-            )
+            Icon(Icons.Filled.Add, null)
+            Text("Add a todo", modifier = Modifier.padding(start = 16.dp))
         }
     }
 }
