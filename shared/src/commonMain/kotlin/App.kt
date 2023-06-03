@@ -1,3 +1,4 @@
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,8 +13,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -89,24 +89,17 @@ private fun TodoList() {
                         Text(
                             todo.text,
                             modifier = Modifier.clickable {
-                                Navigator.navigate(
-                                    Screen.TodoDetails,
-                                    todo
-                                )
+                                TodosState.setCurrentTodoItem(todo)
                             }.align(Alignment.CenterVertically).weight(1f).padding(start = 16.dp),
                         )
                     }
-                    IconButton(
-                        onClick = { TodosState.removeTodo(todo) },
-                        modifier = Modifier.align(Alignment.CenterVertically)
-                    ) {
-                        Icon(Icons.Filled.Delete, null)
-                    }
-                    IconButton(
-                        onClick = { TodosState.setCurrentTodoItem(todo) },
-                        modifier = Modifier.align(Alignment.CenterVertically)
-                    ) {
-                        Icon(Icons.Filled.Edit, null)
+                    if (currentlyEditingTodo == todo) {
+                        IconButton(
+                            onClick = { TodosState.removeTodo(todo) },
+                            modifier = Modifier.align(Alignment.CenterVertically)
+                        ) {
+                            Icon(Icons.Default.Close, null)
+                        }
                     }
                 }
             }
