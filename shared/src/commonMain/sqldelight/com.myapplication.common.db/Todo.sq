@@ -1,0 +1,27 @@
+CREATE TABLE IF NOT EXISTS TodoItem (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  content TEXT DEFAULT '',
+  complete INTEGER DEFAULT 0,
+  TIMESTAMP REAL DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))
+);
+
+selectAll:
+SELECT *
+FROM TodoItem;
+
+insert:
+INSERT INTO TodoItem (content)
+VALUES (?);
+
+update:
+UPDATE TodoItem
+SET complete = ?,
+    content = ?
+WHERE id = ?;
+
+delete:
+DELETE FROM TodoItem
+WHERE id = ?;
+
+selectLastInsertedRowId:
+SELECT last_insert_rowid();

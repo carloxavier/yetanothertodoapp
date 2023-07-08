@@ -4,6 +4,7 @@ import shared
 
 struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
+        driverProvider = DriverFactory().createDriver()
         Main_iosKt.MainViewController()
     }
 

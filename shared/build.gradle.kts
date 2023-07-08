@@ -3,6 +3,7 @@ plugins {
     kotlin("native.cocoapods")
     id("com.android.library")
     id("org.jetbrains.compose")
+    id("app.cash.sqldelight") version "2.0.0-rc01"
 }
 
 kotlin {
@@ -36,6 +37,8 @@ kotlin {
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
                 implementation(compose.components.resources)
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+                implementation("app.cash.sqldelight:runtime:2.0.0-rc01")
+                implementation("app.cash.sqldelight:coroutines-extensions:2.0.0-rc01")
             }
         }
         val androidMain by getting {
@@ -43,6 +46,7 @@ kotlin {
                 api("androidx.activity:activity-compose:1.7.2")
                 api("androidx.appcompat:appcompat:1.6.1")
                 api("androidx.core:core-ktx:1.10.1")
+                implementation("app.cash.sqldelight:android-driver:2.0.0-rc01")
             }
         }
         val iosX64Main by getting
@@ -53,11 +57,15 @@ kotlin {
             iosX64Main.dependsOn(this)
             iosArm64Main.dependsOn(this)
             iosSimulatorArm64Main.dependsOn(this)
+            dependencies {
+                implementation("app.cash.sqldelight:native-driver:2.0.0-rc01")
+            }
         }
         val desktopMain by getting {
             dependencies {
                 implementation(compose.desktop.common)
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.6.4")
+                implementation("app.cash.sqldelight:sqlite-driver:2.0.0-rc01")
             }
         }
     }
@@ -81,5 +89,13 @@ android {
     }
     kotlin {
         jvmToolchain(11)
+    }
+}
+
+sqldelight {
+    databases {
+        create("Database") {
+            packageName.set("com.myapplication.common.db")
+        }
     }
 }
