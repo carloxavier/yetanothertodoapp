@@ -1,10 +1,9 @@
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 object TodosState {
@@ -15,17 +14,27 @@ object TodosState {
             .getTodos()
             .stateIn(scope, SharingStarted.Eagerly, listOf())
 
-    private val _currentTodo = MutableStateFlow(TodoItem())
-    val currentTodo: StateFlow<TodoItem> = _currentTodo
+    private val _currentTodo = mutableStateOf(TodoItem())
+    val currentTodo: State<TodoItem> = _currentTodo
 
     fun setCurrentTodoItem(todoItem: TodoItem) {
-        _currentTodo.update { todoItem }
+        val oldTodoItem = _currentTodo.value
+        scope.launch {
+            if (oldTodoItem.id != null) {
+                todosRepository.updateTodoItem(oldTodoItem)
+            }
+        }
+        _currentTodo.value = todoItem
+    }
+
+    fun clearCurrentTodoItem() {
+        setCurrentTodoItem(TodoItem())
     }
 
     fun addTodo(todoItem: TodoItem) {
         scope.launch {
             val insertedTodo = todosRepository.addTodoItem(todoItem)
-            _currentTodo.update { insertedTodo }
+            setCurrentTodoItem(insertedTodo)
         }
     }
 
@@ -43,12 +52,6 @@ object TodosState {
     }
 
     fun updateCurrentTodoItem(text: String) {
-        val newCurrentTodo = _currentTodo.value.copy(text = text)
-        dataBase.todoQueries.update(
-            newCurrentTodo.done.toLong(),
-            newCurrentTodo.text,
-            newCurrentTodo.id!!
-        )
-        _currentTodo.update { newCurrentTodo }
+        _currentTodo.value = _currentTodo.value.copy(text = text)
     }
 }
