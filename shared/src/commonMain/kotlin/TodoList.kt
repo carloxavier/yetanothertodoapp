@@ -33,8 +33,13 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun TodoListView() {
     val todos = TodosState.todos.collectAsState().value
-    val currentlyEditingTodo = TodosState.currentTodo.value
+    val currentlyEditingTodo = TodosState.currentTodo
     val focusRequester = remember { FocusRequester() }
+    var textFieldValue = TextFieldValue(
+        currentlyEditingTodo.value.text,
+        selection = TextRange(currentlyEditingTodo.value.text.length)
+    )
+
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         Column {
             todos.forEach { todo ->
@@ -42,13 +47,13 @@ fun TodoListView() {
                     Checkbox(checked = todo.done, onCheckedChange = {
                         TodosState.toggleTodoCompletion(todo)
                     })
-                    if (currentlyEditingTodo.id == todo.id) {
+                    if (currentlyEditingTodo.value.id == todo.id) {
                         OutlinedTextField(
-                            value = TextFieldValue(
-                                currentlyEditingTodo.text,
-                                selection = TextRange(currentlyEditingTodo.text.length)
-                            ),
-                            onValueChange = { TodosState.updateCurrentTodoItem(it.text) },
+                            value = textFieldValue,
+                            onValueChange = {
+                                TodosState.updateCurrentTodoItem(it.text)
+                                textFieldValue = it
+                            },
                             modifier = Modifier.clickable {
                                 Navigator.navigate(
                                     Screen.TodoDetails,
@@ -78,7 +83,7 @@ fun TodoListView() {
                             }.align(Alignment.CenterVertically).weight(1f).padding(start = 16.dp),
                         )
                     }
-                    if (currentlyEditingTodo == todo) {
+                    if (currentlyEditingTodo.value == todo) {
                         IconButton(
                             onClick = { TodosState.removeTodo(todo) },
                             modifier = Modifier.align(Alignment.CenterVertically)
