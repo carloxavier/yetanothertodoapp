@@ -1,9 +1,9 @@
 import app.cash.sqldelight.db.SqlDriver
+import app.cash.sqldelight.driver.native.NativeSqliteDriver
+import com.myapplication.common.db.Database
 
 actual class DriverFactory {
     actual fun createDriver(): SqlDriver {
-        TODO("Not yet implemented")
+        return NativeSqliteDriver(Database.Schema, "todo.db")
     }
 }
-
-actual var driverProvider: SqlDriver? = null

@@ -9,4 +9,3 @@ actual class DriverFactory {
     }
 }
 
-actual var driverProvider: SqlDriver? = null
