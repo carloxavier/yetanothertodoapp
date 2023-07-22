@@ -10,8 +10,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.LocalContentAlpha
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -38,7 +41,7 @@ fun TodoListView() {
     val todos = TodosState.todos.collectAsState().value
     val currentlyEditingTodo = TodosState.currentTodo
     val focusRequester = remember { FocusRequester() }
-    var textFieldValue by remember {
+    var currentlyEditingTodoTextFieldValue by remember {
         mutableStateOf(
             TextFieldValue(
                 currentlyEditingTodo.value.text,
@@ -53,46 +56,43 @@ fun TodoListView() {
                     Checkbox(checked = todo.done, onCheckedChange = {
                         TodosState.toggleTodoCompletion(todo)
                     })
-                    if (currentlyEditingTodo.value.id == todo.id) {
-                        OutlinedTextField(
-                            value = textFieldValue,
-                            onValueChange = {
-                                TodosState.updateCurrentTodoItem(it.text)
-                                textFieldValue = it
+                    TextField(
+                        value = if (currentlyEditingTodo.value.id == todo.id)
+                            currentlyEditingTodoTextFieldValue
+                        else TextFieldValue(todo.text),
+                        onValueChange = {
+                            TodosState.updateCurrentTodoItem(it.text)
+                            currentlyEditingTodoTextFieldValue = it
+                        },
+                        colors = TextFieldDefaults.textFieldColors(
+                            backgroundColor = androidx.compose.ui.graphics.Color.Transparent,
+                            focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                            disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                            unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                            disabledTextColor = LocalContentColor.current.copy(LocalContentAlpha.current)
+                        ),
+                        modifier = Modifier.clickable {
+                            TodosState.setCurrentTodoItem(todo)
+                            currentlyEditingTodoTextFieldValue = TextFieldValue(
+                                todo.text,
+                                selection = TextRange(todo.text.length)
+                            )
+                        }.align(Alignment.CenterVertically)
+                            .padding(start = 16.dp)
+                            .weight(1f)
+                            .focusRequester(focusRequester)
+                            .onGloballyPositioned {
+                                focusRequester.requestFocus()
                             },
-                            modifier = Modifier.clickable {
-                                Navigator.navigate(
-                                    Screen.TodoDetails,
-                                    todo
-                                )
-                            }.align(Alignment.CenterVertically)
-                                .padding(start = 16.dp)
-                                .weight(1f)
-                                .focusRequester(focusRequester)
-                                .onGloballyPositioned {
-                                    focusRequester.requestFocus()
-                                },
-                            enabled = true,
-                            singleLine = true,
-                            keyboardActions = KeyboardActions(
-                                onGo = {
-                                    TodosState.clearCurrentTodoItem()
-                                }
-                            ),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go)
-                        )
-                    } else {
-                        Text(
-                            todo.text,
-                            modifier = Modifier.clickable {
-                                TodosState.setCurrentTodoItem(todo)
-                                textFieldValue = TextFieldValue(
-                                    todo.text,
-                                    selection = TextRange(todo.text.length)
-                                )
-                            }.align(Alignment.CenterVertically).weight(1f).padding(start = 16.dp),
-                        )
-                    }
+                        enabled = currentlyEditingTodo.value.id == todo.id,
+                        singleLine = true,
+                        keyboardActions = KeyboardActions(
+                            onGo = {
+                                TodosState.clearCurrentTodoItem()
+                            }
+                        ),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go)
+                    )
                     if (currentlyEditingTodo.value == todo) {
                         IconButton(
                             onClick = { TodosState.removeTodo(todo) },
