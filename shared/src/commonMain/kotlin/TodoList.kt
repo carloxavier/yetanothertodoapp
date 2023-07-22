@@ -19,7 +19,10 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -35,11 +38,14 @@ fun TodoListView() {
     val todos = TodosState.todos.collectAsState().value
     val currentlyEditingTodo = TodosState.currentTodo
     val focusRequester = remember { FocusRequester() }
-    var textFieldValue = TextFieldValue(
-        currentlyEditingTodo.value.text,
-        selection = TextRange(currentlyEditingTodo.value.text.length)
-    )
-
+    var textFieldValue by remember {
+        mutableStateOf(
+            TextFieldValue(
+                currentlyEditingTodo.value.text,
+                selection = TextRange(currentlyEditingTodo.value.text.length)
+            )
+        )
+    }
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         Column {
             todos.forEach { todo ->
@@ -80,6 +86,10 @@ fun TodoListView() {
                             todo.text,
                             modifier = Modifier.clickable {
                                 TodosState.setCurrentTodoItem(todo)
+                                textFieldValue = TextFieldValue(
+                                    todo.text,
+                                    selection = TextRange(todo.text.length)
+                                )
                             }.align(Alignment.CenterVertically).weight(1f).padding(start = 16.dp),
                         )
                     }
@@ -97,9 +107,7 @@ fun TodoListView() {
         }
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 32.dp).clickable {
-                TodoItem().also {
-                    TodosState.addTodo(it)
-                }
+                TodosState.addTodo(TodoItem())
             },
             verticalAlignment = Alignment.CenterVertically
         ) {

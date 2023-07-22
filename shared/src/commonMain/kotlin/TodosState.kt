@@ -33,8 +33,7 @@ object TodosState {
 
     fun addTodo(todoItem: TodoItem) {
         scope.launch {
-            val insertedTodo = todosRepository.addTodoItem(todoItem)
-            setCurrentTodoItem(insertedTodo)
+            todosRepository.addTodoItem(todoItem)
         }
     }
 
