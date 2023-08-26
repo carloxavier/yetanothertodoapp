@@ -64,7 +64,7 @@ kotlin {
         val desktopMain by getting {
             dependencies {
                 implementation(compose.desktop.common)
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.6.4")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.7.1")
                 implementation("app.cash.sqldelight:sqlite-driver:2.0.0-rc01")
             }
         }
