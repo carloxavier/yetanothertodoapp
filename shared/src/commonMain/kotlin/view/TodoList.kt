@@ -1,3 +1,5 @@
+package view
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,11 +37,14 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import common.di.DependencyProvider
+import domain.TodoItem
+import view.navigation.Navigator
 
 @Composable
-fun TodoListView() {
-    val todos = TodosState.todos.collectAsState().value
-    val currentlyEditingTodo = TodosState.currentTodo
+fun TodoListView(viewModel: TodosListViewModel = DependencyProvider.todosListViewModel) {
+    val todos = viewModel.todos.collectAsState().value
+    val currentlyEditingTodo = viewModel.currentTodo
     val focusRequester = remember { FocusRequester() }
     var currentlyEditingTodoTextFieldValue by remember {
         mutableStateOf(
@@ -54,14 +59,14 @@ fun TodoListView() {
             todos.forEach { todo ->
                 Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 16.dp)) {
                     Checkbox(checked = todo.done, onCheckedChange = {
-                        TodosState.toggleTodoCompletion(todo)
+                        viewModel.toggleTodoCompletion(todo)
                     })
                     TextField(
                         value = if (currentlyEditingTodo.value.id == todo.id)
                             currentlyEditingTodoTextFieldValue
                         else TextFieldValue(todo.text),
                         onValueChange = {
-                            TodosState.updateCurrentTodoItem(it.text)
+                            viewModel.updateCurrentTodoItem(it.text)
                             currentlyEditingTodoTextFieldValue = it
                         },
                         colors = TextFieldDefaults.textFieldColors(
@@ -72,7 +77,7 @@ fun TodoListView() {
                             disabledTextColor = LocalContentColor.current.copy(LocalContentAlpha.current)
                         ),
                         modifier = Modifier.clickable {
-                            TodosState.setCurrentTodoItem(todo)
+                            viewModel.setCurrentTodoItem(todo)
                             currentlyEditingTodoTextFieldValue = TextFieldValue(
                                 todo.text,
                                 selection = TextRange(todo.text.length)
@@ -88,14 +93,14 @@ fun TodoListView() {
                         singleLine = true,
                         keyboardActions = KeyboardActions(
                             onGo = {
-                                TodosState.clearCurrentTodoItem()
+                                viewModel.clearCurrentTodoItem()
                             }
                         ),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go)
                     )
                     if (currentlyEditingTodo.value == todo) {
                         IconButton(
-                            onClick = { TodosState.removeTodo(todo) },
+                            onClick = { viewModel.removeTodo(todo) },
                             modifier = Modifier.align(Alignment.CenterVertically)
                         ) {
                             Icon(Icons.Default.Close, null)
@@ -107,7 +112,7 @@ fun TodoListView() {
         }
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 32.dp).clickable {
-                TodosState.addTodo(TodoItem())
+                viewModel.addTodo(TodoItem())
             },
             verticalAlignment = Alignment.CenterVertically
         ) {

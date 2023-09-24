@@ -1,3 +1,5 @@
+package view.navigation
+
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

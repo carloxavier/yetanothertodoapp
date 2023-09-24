@@ -1,4 +1,10 @@
+package data
+
 import app.cash.sqldelight.coroutines.asFlow
+import com.myapplication.common.db.Database
+import common.toBoolean
+import common.toLong
+import domain.TodoItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -9,7 +15,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 
-class TodoRepository {
+class TodoRepository(private val dataBase: Database) {
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getTodos(): StateFlow<List<TodoItem>> = dataBase.todoQueries.selectAll().asFlow()
         .mapLatest { todos ->

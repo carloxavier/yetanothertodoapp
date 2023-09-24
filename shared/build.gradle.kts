@@ -39,6 +39,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
                 implementation("app.cash.sqldelight:runtime:2.0.0-rc01")
                 implementation("app.cash.sqldelight:coroutines-extensions:2.0.0-rc01")
+                implementation("org.kodein.di:kodein-di:7.19.0")
             }
         }
         val androidMain by getting {

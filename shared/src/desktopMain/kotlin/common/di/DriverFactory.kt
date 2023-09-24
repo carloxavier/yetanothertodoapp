@@ -1,3 +1,4 @@
+package common.di
 
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
@@ -16,4 +17,3 @@ actual class DriverFactory {
         return driver
     }
 }
-

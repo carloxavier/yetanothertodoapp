@@ -1,18 +1,16 @@
+package view
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import data.TodoRepository
+import domain.TodoItem
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-object TodosState {
-    private val scope = CoroutineScope(Job())
-    private val todosRepository = TodoRepository()
-    val todos =
-        todosRepository
-            .getTodos()
-            .stateIn(scope, SharingStarted.Eagerly, listOf())
+class TodosListViewModel(private val todosRepository: TodoRepository) {
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    val todos = todosRepository.getTodos()
 
     private val _currentTodo = mutableStateOf(TodoItem())
     val currentTodo: State<TodoItem> = _currentTodo

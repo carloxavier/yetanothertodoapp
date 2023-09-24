@@ -1,3 +1,5 @@
+package view.navigation
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 

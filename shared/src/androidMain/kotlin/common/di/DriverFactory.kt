@@ -1,3 +1,5 @@
+package common.di
+
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.myapplication.common.db.Database

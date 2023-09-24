@@ -1,11 +1,11 @@
 package com.myapplication
 
-import DriverFactory
 import MainView
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import driver
+import common.di.DriverFactory
+import common.di.DependencyProvider.driver
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
