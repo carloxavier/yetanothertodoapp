@@ -5,10 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -54,9 +54,8 @@ fun TodoListView(viewModel: TodosListViewModel = DependencyProvider.todosListVie
             )
         )
     }
-    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-        Column {
-            todos.forEach { todo ->
+    LazyColumn {
+        items(todos) {todo ->
                 Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 16.dp)) {
                     Checkbox(checked = todo.done, onCheckedChange = {
                         viewModel.toggleTodoCompletion(todo)
@@ -107,17 +106,18 @@ fun TodoListView(viewModel: TodosListViewModel = DependencyProvider.todosListVie
                         }
                     }
                 }
-            }
 
         }
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 32.dp).clickable {
-                viewModel.addTodo(TodoItem())
-            },
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Filled.Add, null)
-            Text("Add a todo", modifier = Modifier.padding(start = 16.dp))
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 32.dp).clickable {
+                    viewModel.addTodo(TodoItem())
+                },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Filled.Add, null)
+                Text("Add a todo", modifier = Modifier.padding(start = 16.dp))
+            }
         }
     }
 }
