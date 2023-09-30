@@ -1,4 +1,5 @@
 package view
+
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import data.TodoRepository
@@ -6,11 +7,19 @@ import domain.TodoItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class TodosListViewModel(private val todosRepository: TodoRepository) {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    val todos = todosRepository.getTodos()
+
+    val todos: StateFlow<List<TodoItem>> = todosRepository.getTodos().stateIn(
+        scope = scope,
+        started = SharingStarted.WhileSubscribed(),
+        initialValue = emptyList()
+    )
 
     private val _currentTodo = mutableStateOf(TodoItem())
     val currentTodo: State<TodoItem> = _currentTodo
