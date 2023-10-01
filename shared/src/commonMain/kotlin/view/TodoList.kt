@@ -36,41 +36,38 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import common.di.DependencyProvider
-import domain.TodoItem
 
 @Composable
 fun TodoListView(viewModel: TodosListViewModel = DependencyProvider.todosListViewModel) {
     val todos = viewModel.todos.collectAsState().value
-    val currentlyEditingTodo = viewModel.currentTodo.value
     TodoListViewStateless(
         todos,
-        currentlyEditingTodo,
-        onTodoCompletedChange = { viewModel.toggleTodoCompletion(it) },
-        onTodoTextChange = { todo, text -> viewModel.setCurrentTodoItem(todo.copy(text = text)) },
-        onSelectTodo = { viewModel.setCurrentTodoItem(it) },
-        onClearCurrentTodo = { viewModel.clearCurrentTodoItem() },
-        onRemoveTodo = { viewModel.removeTodo(it) },
-        onTodoAdded = { viewModel.addTodo(it) }
+        onTodoCompletedChange = viewModel::toggleTodoCompletion,
+        onTodoTextChange = viewModel::updateCurrentTodoItem,
+        onSelectTodo = viewModel::setCurrentTodoItem,
+        onClearCurrentTodo = viewModel::clearCurrentTodoItem,
+        onRemoveTodo = viewModel::removeTodo,
+        onTodoAdded = viewModel::addTodo
     )
 }
 
 @Composable
 private fun TodoListViewStateless(
-    todos: List<TodoItem>,
-    currentlyEditingTodo: TodoItem,
-    onTodoCompletedChange: (TodoItem) -> Unit = {},
-    onTodoTextChange: (TodoItem, String) -> Unit = { _, _ -> },
-    onSelectTodo: (TodoItem) -> Unit = {},
+    todos: List<TodoListViewItemState>,
+    onTodoCompletedChange: (TodoListViewItemState) -> Unit = {},
+    onTodoTextChange: (String) -> Unit = {},
+    onSelectTodo: (TodoListViewItemState) -> Unit = {},
     onClearCurrentTodo: () -> Unit = {},
-    onRemoveTodo: (TodoItem) -> Unit = {},
-    onTodoAdded: (TodoItem) -> Unit = {}
+    onRemoveTodo: (TodoListViewItemState) -> Unit = {},
+    onTodoAdded: () -> Unit = {}
 ) {
     val focusRequester = remember { FocusRequester() }
     var currentlyEditingTodoTextFieldValue by remember {
+        val selectedTodoText = todos.find { it.isEditing }?.text ?: ""
         mutableStateOf(
             TextFieldValue(
-                currentlyEditingTodo.text,
-                selection = TextRange(currentlyEditingTodo.text.length)
+                selectedTodoText,
+                selection = TextRange(selectedTodoText.length)
             )
         )
     }
@@ -81,11 +78,11 @@ private fun TodoListViewStateless(
                     onTodoCompletedChange(todo)
                 })
                 TextField(
-                    value = if (currentlyEditingTodo.id == todo.id)
+                    value = if (todo.isEditing)
                         currentlyEditingTodoTextFieldValue
                     else TextFieldValue(todo.text),
                     onValueChange = {
-                        onTodoTextChange(currentlyEditingTodo, it.text)
+                        onTodoTextChange(it.text)
                         currentlyEditingTodoTextFieldValue = it
                     },
                     colors = TextFieldDefaults.textFieldColors(
@@ -108,7 +105,7 @@ private fun TodoListViewStateless(
                         .onGloballyPositioned {
                             focusRequester.requestFocus()
                         },
-                    enabled = currentlyEditingTodo.id == todo.id,
+                    enabled = todo.isEditing,
                     singleLine = true,
                     keyboardActions = KeyboardActions(
                         onGo = {
@@ -117,7 +114,7 @@ private fun TodoListViewStateless(
                     ),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go)
                 )
-                if (currentlyEditingTodo == todo) {
+                if (todo.isEditing) {
                     IconButton(
                         onClick = { onRemoveTodo(todo) },
                         modifier = Modifier.align(Alignment.CenterVertically)
@@ -131,7 +128,7 @@ private fun TodoListViewStateless(
         item {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp, end = 32.dp).clickable {
-                    onTodoAdded(TodoItem())
+                    onTodoAdded()
                 },
                 verticalAlignment = Alignment.CenterVertically
             ) {
